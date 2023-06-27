@@ -1,26 +1,27 @@
+# yaml文件用于书写配置
 CLASS_NAMES: ['Car', 'Pedestrian', 'Cyclist']
 
 DATA_CONFIG: 
-    _BASE_CONFIG_: cfgs/dataset_configs/kitti_dataset.yaml
-    POINT_CLOUD_RANGE: [0, -39.68, -3, 69.12, 39.68, 1]
-    DATA_PROCESSOR:
-        - NAME: mask_points_and_boxes_outside_range
+    _BASE_CONFIG_: cfgs/dataset_configs/kitti_dataset.yaml # 数据集配置文件地址
+    POINT_CLOUD_RANGE: [0, -39.68, -3, 69.12, 39.68, 1] # 点云范围
+    DATA_PROCESSOR: # 数据预处理配置
+        - NAME: mask_points_and_boxes_outside_range # 去除范围外的点和框
           REMOVE_OUTSIDE_BOXES: True
 
-        - NAME: shuffle_points
+        - NAME: shuffle_points # 打乱点云的顺序，训练True，测试False
           SHUFFLE_ENABLED: {
             'train': True,
             'test': False
           }
 
-        - NAME: transform_points_to_voxels
-          VOXEL_SIZE: [0.16, 0.16, 4]
-          MAX_POINTS_PER_VOXEL: 32
-          MAX_NUMBER_OF_VOXELS: {
+        - NAME: transform_points_to_voxels # 生成体素
+          VOXEL_SIZE: [0.16, 0.16, 4] # 体素的大小
+          MAX_POINTS_PER_VOXEL: 32 # 体素中点的最大数量
+          MAX_NUMBER_OF_VOXELS: { 
             'train': 16000,
             'test': 40000
-          }
-    DATA_AUGMENTOR:
+          } # 训练和测试，体素数量不同
+    DATA_AUGMENTOR: # 数据增强
         DISABLE_AUG_LIST: ['placeholder']
         AUG_CONFIG_LIST:
             - NAME: gt_sampling
@@ -47,10 +48,10 @@ DATA_CONFIG:
             - NAME: random_world_scaling
               WORLD_SCALE_RANGE: [0.95, 1.05]
 
-MODEL:
+MODEL: # 模型配置
     NAME: PointPillar
-
-    VFE:
+# 模型包括 VFE MAP_TO_BEV BACKBONE_2D DENSE_HEAD POST_PROCESSING 五个部分
+    VFE: 
         NAME: PillarVFE
         WITH_DISTANCE: False
         USE_ABSLOTE_XYZ: True
@@ -77,8 +78,8 @@ MODEL:
         DIR_OFFSET: 0.78539
         DIR_LIMIT_OFFSET: 0.0
         NUM_DIR_BINS: 2
-
-        ANCHOR_GENERATOR_CONFIG: [
+# Anchor 生成参数
+        ANCHOR_GENERATOR_CONFIG: [ 
             {
                 'class_name': 'Car',
                 'anchor_sizes': [[3.9, 1.6, 1.56]],
@@ -118,7 +119,7 @@ MODEL:
             NORM_BY_NUM_EXAMPLES: False
             MATCH_HEIGHT: False
             BOX_CODER: ResidualCoder
-
+# 损失函数参数配置
         LOSS_CONFIG:
             LOSS_WEIGHTS: {
                 'cls_weight': 1.0,
@@ -141,13 +142,13 @@ MODEL:
             NMS_PRE_MAXSIZE: 4096
             NMS_POST_MAXSIZE: 500
 
-
+# 优化器参数配置
 OPTIMIZATION:
-    BATCH_SIZE_PER_GPU: 4
-    NUM_EPOCHS: 80
+    BATCH_SIZE_PER_GPU: 4 # 每个GPU的batchsize
+    NUM_EPOCHS: 80 # 训练的Epochs 80
 
-    OPTIMIZER: adam_onecycle
-    LR: 0.003
+    OPTIMIZER: adam_onecycle # 优化器名称
+    LR: 0.003 # 学习率
     WEIGHT_DECAY: 0.01
     MOMENTUM: 0.9
 
