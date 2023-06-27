@@ -18,21 +18,25 @@ class Detector3DTemplate(nn.Module):
         self.num_class = num_class
         self.dataset = dataset
         self.class_names = dataset.class_names
-        self.register_buffer('global_step', torch.LongTensor(1).zero_())
+        self.register_buffer('global_step', torch.LongTensor(1).zero_()) # 注册一个缓冲区，用0初始化，跟踪已训练批次
 
         self.module_topology = [
             'vfe', 'backbone_3d', 'map_to_bev_module', 'pfe',
             'backbone_2d', 'dense_head',  'point_head', 'roi_head'
-        ]
+        ] # 定义列表，表示神经网络模块拓扑结构
 
-    @property
+    # 装饰器，mode包装成属性
+    @property 
     def mode(self):
         return 'TRAIN' if self.training else 'TEST'
 
+    # 跟踪训练批次
     def update_global_step(self):
         self.global_step += 1
 
+    # 函数负责构架和初始化检测器各组件
     def build_networks(self):
+        # 存储配置信息和参数
         model_info_dict = {
             'module_list': [],
             'num_rawpoint_features': self.dataset.point_feature_encoder.num_point_features,
@@ -42,12 +46,15 @@ class Detector3DTemplate(nn.Module):
             'voxel_size': self.dataset.voxel_size,
             'depth_downsample_factor': self.dataset.depth_downsample_factor
         }
+        
+        # 遍历上面定义的module_topology列表，列表包含各组件名称
         for module_name in self.module_topology:
+            # 'getattr(self, 'build_%s' % module_name)'这个部分整体作为一个函数方法使用
             module, model_info_dict = getattr(self, 'build_%s' % module_name)(
                 model_info_dict=model_info_dict
-            )
-            self.add_module(module_name, module)
-        return model_info_dict['module_list']
+            ) # 它将把module_name插入到字符串build_后面，如果module_name是'vfe'，那么结果字符串就是'build_vfe'；getattr()函数用来获取对象方法；并且使用前面获取的方法修改model_info_dict 
+            self.add_module(module_name, module) # 通过循环的方式向网络中增加模块
+        return model_info_dict['module_list'] # 返回网络链表，在后续使用
 
     def build_vfe(self, model_info_dict):
         if self.model_cfg.get('VFE', None) is None:
