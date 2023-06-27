@@ -175,6 +175,7 @@ class Detector3DTemplate(nn.Module):
     def forward(self, **kwargs):
         raise NotImplementedError
 
+    # 处理3D检测器输出，处理NMS非最大值抑制
     def post_processing(self, batch_dict):
         """
         Args:
